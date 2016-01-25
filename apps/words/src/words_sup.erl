@@ -34,11 +34,11 @@ init([]) ->
          end,
   WordsFile = string:concat(code:priv_dir(words), "/words.txt"),
   Children = [
-              #{ id => words,
-                 start => {words, start_link, [{words, WordsFile}]}
-               },
               #{ id => cowboy_words,
                  start => {cowboy_words, start_link, [{port, Port}]}
+               },
+              #{ id => words,
+                 start => {words, start_link, [{words, WordsFile}]}
                }
 
              ],

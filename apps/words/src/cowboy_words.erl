@@ -37,7 +37,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(Args) ->
-        gen_server:start_link({local, ?SERVER}, ?MODULE, Args, []).
+  gen_server:start_link({local, ?SERVER}, ?MODULE, [Args], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -54,7 +54,16 @@ start_link(Args) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init(Args) ->
+init([{port, Port}]) ->
+  Handlers = [
+              { "/", cowboy_static, {priv_file, words, "static/index.html"}}
+             ],
+  Dispatch = cowboy_router:compile([
+                                    {'_', Handlers}]),
+  io:format("Starting cowboy on port ~p~n", [Port]),
+  {ok, _} = cowboy:start_http(my_http_listener, 100,
+                              [{port, Port}],
+                              [{env, [{dispatch, Dispatch}]}]),
   {ok, #state{}}.
 
 %%--------------------------------------------------------------------
