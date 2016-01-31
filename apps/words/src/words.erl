@@ -146,9 +146,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
--spec word_to_regexp(string()) -> string().
+-spec word_to_regexp(binary()) -> string().
 word_to_regexp(Word) ->
-  word_to_regexp(Word, "").
+  R = word_to_regexp(binary_to_list(Word), ""),
+  list_to_binary(R).
 
 -spec word_to_regexp(string(), string()) -> string().
 word_to_regexp("", Acc) ->
@@ -161,9 +162,9 @@ word_to_regexp([H|T], Acc) ->
 
 
 word_to_regexp_test() ->
-  "f.." = word_to_regexp("Foo"),
-  "f..b" = word_to_regexp("FooB"),
-  "foo" = word_to_regexp("FOO"),
+  <<"f..">> = word_to_regexp(<<"Foo">>),
+  <<"f..b">> = word_to_regexp(<<"FooB">>),
+  <<"foo">> = word_to_regexp(<<"FOO">>),
   ok.
 
 -spec match(string(), [string()]) -> [string()].
@@ -183,23 +184,23 @@ match(RegEx, [W|Words], Acc) ->
 
 
 match_test() ->
-  Words = ["foo", "fee", "foo", "woo", "wow"],
-  ["wow", "woo"] = match("Woo", Words),
-  ["woo"] = match("WoO", Words),
+  Words = [<<"foo">>, <<"fee">>, <<"foo">>, <<"woo">>, <<"wow">>],
+  [<<"wow">>, <<"woo">>] = match(<<"Woo">>, Words),
+  [<<"woo">>] = match(<<"WoO">>, Words),
   ok.
 
 get_all_lines(IoDevice, Acc) ->
   case io:get_line(IoDevice, "") of
     eof -> file:close(IoDevice), lists:reverse(Acc);
-    Line -> get_all_lines(IoDevice, [Line | Acc])
+    Line -> get_all_lines(IoDevice, [list_to_binary(string:strip(Line, both, $\n)) | Acc])
   end.
 
 main_test() ->
   start_link({words, "apps/words/priv/words.txt"}),
-  W1 = "teCciRkoeeF",
+  W1 = <<"teCciRkoeeF">>,
   R1 = match(W1),
   ?debugFmt("~p ~p~n", [W1, R1]),
-  ?debugFmt("~p~n", [match("HOtosdontuH")]),
+  ?debugFmt("~p~n", [match(<<"HOtosdontuH">>)]),
   ok.
 
 

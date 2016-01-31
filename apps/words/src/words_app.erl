@@ -16,9 +16,6 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-  io:format("StartType: ~p~nStartArgs: ~p~n", [_StartType, _StartArgs]),
-  io:format("Priv: ~p~n", [code:lib_dir(words, priv)]),
-  io:format("env: ~p~n", [application:get_env(port)]),
   'words_sup':start_link().
 
 %%--------------------------------------------------------------------

@@ -1,0 +1,97 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Words</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.6/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.6/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script type="text/babel">
+      var WordsForm = React.createClass({
+        getInitialState: function() {
+          return {'word': "HOtosdontuH"};
+        },
+        handleWordChange: function(e) {
+          this.setState({word: e.target.value});
+        },
+        handleSubmit: function(e) {
+          e.preventDefault();
+          var word = this.state.word.trim();
+          if (!word) {
+            return;
+          }
+
+          this.props.onWordSubmit({word: word});
+        },
+        render: function() {
+          return (
+           <form className="wordsForm" onSubmit={this.handleSubmit}>
+             <input 
+               type='text'
+               placeholder="Enter word"
+               onChange={this.handleWordChange}/>
+               <input type="submit" value="Check"/>
+           </form>
+          );
+        }
+      });
+      var WordsResult = React.createClass({
+        render: function() {
+          var words = this.props.data.map(function(w) {
+            return (
+              <li>{w}</li>
+              );
+          });
+          return (
+            <div className="wordsResult">
+              Results
+              <ul>
+                {words}
+              </ul>
+            </div>
+          );
+        }
+      });
+      var WordsBox = React.createClass({
+        submitWord: function(w) {
+          console.log(w.word);
+          var url=this.props.url + w.word;
+          console.log(url);
+          $.ajax({
+            url: url,
+            dataType: 'json',
+            cache: false,
+            success: function(data) {
+              this.setState({data: data});
+            }.bind(this),
+            error: function(xhr, status, err) {
+              console.error(this.props.url, status, err.toString());
+            }.bind(this)
+          });
+        },
+        getInitialState: function() {
+          return {data: []};
+        },
+        render: function() {
+          return (
+            <div className="wordsBox">
+              <WordsForm onWordSubmit={this.submitWord} />
+              <WordsResult data={this.state.data}/>
+            </div>
+          );
+        }
+      });
+
+      ReactDOM.render(
+        <WordsBox url="/api/word/" />,
+        document.getElementById('content')
+        );
+
+    </script>
+  </body>
+</html>
+

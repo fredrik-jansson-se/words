@@ -56,7 +56,10 @@ start_link(Args) ->
 %%--------------------------------------------------------------------
 init([{port, Port}]) ->
   Handlers = [
-              { "/", cowboy_static, {priv_file, words, "static/index.html"}}
+              { "/", cowboy_static, {priv_file, words, "static/words.html"}},
+							{ "/scripts/[...]", cowboy_static, {priv_dir, words, "scripts"}},
+              { "/api/comments", comments_handler, [] },
+              { "/api/word/[:word]", words_handler, []}
              ],
   Dispatch = cowboy_router:compile([
                                     {'_', Handlers}]),
