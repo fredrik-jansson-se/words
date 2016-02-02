@@ -14,7 +14,8 @@
 
 %% API
 -export([start_link/1,
-        match/1
+        match/1,
+        match/2
         ]).
 
 %% gen_server callbacks
@@ -46,7 +47,10 @@ start_link(Args) ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [Args], []).
 
 match(Word) ->
-  gen_server:call(?SERVER, {match, Word}).
+  match(Word, []).
+
+match(Words, Opts) ->
+  gen_server:call(?SERVER, {match, Words, Opts}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -88,8 +92,8 @@ init([{words, WordsFile}]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({match, Word}, _From, State) ->
-  {reply, {ok, match(Word, State#state.words)}, State}.
+handle_call({match, Word, Opts}, _From, State) ->
+  {reply, {ok, do_match(Word, Opts, State#state.words)}, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -146,7 +150,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
--spec word_to_regexp(binary()) -> string().
+-spec word_to_regexp(binary()) -> binary().
 word_to_regexp(Word) ->
   R = word_to_regexp(binary_to_list(Word), ""),
   list_to_binary(R).
@@ -167,10 +171,24 @@ word_to_regexp_test() ->
   <<"foo">> = word_to_regexp(<<"FOO">>),
   ok.
 
--spec match(string(), [string()]) -> [string()].
-match(Word, Words) ->
-  {ok, RegEx} = re:compile(word_to_regexp(Word)),
+-type option() :: match_start | match_end.
+-spec do_match(binary(), [option()], [binary()]) -> [binary()].
+do_match(Word, Opts, Words) ->
+  Re1 = word_to_regexp(Word),
+  Re2 = apply_options(Re1, Opts),
+  {ok, RegEx} = re:compile(Re2),
   match(RegEx, Words, []).
+
+apply_options(Re, [match_start|T]) ->
+  Prefix = <<"^">>,
+  Res = erlang:iolist_to_binary([Prefix, Re]),
+  apply_options(Res, T);
+apply_options(Re, [match_end|T]) ->
+  Postfix = <<"$">>,
+  Res = erlang:iolist_to_binary([Re, Postfix]),
+  apply_options(Res, T);
+apply_options(Re, []) ->
+  Re.
 
 %-spec match(re:mp(), [string()], [string()]) -> [string()].
 match(_RegEx, [], Acc) -> 
@@ -183,10 +201,10 @@ match(RegEx, [W|Words], Acc) ->
   end.
 
 
-match_test() ->
+do_match_test() ->
   Words = [<<"foo">>, <<"fee">>, <<"foo">>, <<"woo">>, <<"wow">>],
-  [<<"wow">>, <<"woo">>] = match(<<"Woo">>, Words),
-  [<<"woo">>] = match(<<"WoO">>, Words),
+  [<<"wow">>, <<"woo">>] = do_match(<<"Woo">>, [], Words),
+  [<<"woo">>] = do_match(<<"WoO">>, [], Words),
   ok.
 
 get_all_lines(IoDevice, Acc) ->
@@ -195,12 +213,20 @@ get_all_lines(IoDevice, Acc) ->
     Line -> get_all_lines(IoDevice, [list_to_binary(string:strip(Line, both, $\n)) | Acc])
   end.
 
-main_test() ->
-  start_link({words, "apps/words/priv/words.txt"}),
-  W1 = <<"teCciRkoeeF">>,
-  R1 = match(W1),
-  ?debugFmt("~p ~p~n", [W1, R1]),
-  ?debugFmt("~p~n", [match(<<"HOtosdontuH">>)]),
+match_start_end_test() ->
+  % hooliganish
+  Words = [<<"wow">>, <<"powow">>, <<"wower">>],
+  [<<"wower">>, <<"wow">>] = do_match(<<"WOW">>, [match_start], Words),
+  [<<"powow">>, <<"wow">>] = do_match(<<"WOW">>, [match_end], Words),
+  [<<"wow">>] = do_match(<<"WOW">>, [match_start, match_end], Words),
   ok.
+
+%main_test() ->
+%  start_link({words, "apps/words/priv/words.txt"}),
+%  W1 = <<"teCciRkoeeF">>,
+%  R1 = match(W1),
+%  ?debugFmt("~p ~p~n", [W1, R1]),
+%  ?debugFmt("~p~n", [match(<<"HOtosdontuH">>)]),
+%  ok.
 
 
