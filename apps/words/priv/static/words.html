@@ -13,10 +13,16 @@
     <script type="text/babel">
       var WordsForm = React.createClass({
         getInitialState: function() {
-          return {'word': "HOtosdontuH"};
+          return {'word': "HOtosdontuH", matchStart:false, matchEnd:false};
         },
         handleWordChange: function(e) {
           this.setState({word: e.target.value});
+        },
+        handleMatchStartChange: function(e) {
+          this.setState({matchStart: e.target.checked});
+        },
+        handleMatchEndChange: function(e) {
+          this.setState({matchEnd: e.target.checked});
         },
         handleSubmit: function(e) {
           e.preventDefault();
@@ -25,7 +31,7 @@
             return;
           }
 
-          this.props.onWordSubmit({word: word});
+          this.props.onWordSubmit({word: word, matchStart: this.state.matchStart, matchEnd: this.state.matchEnd});
         },
         render: function() {
           return (
@@ -34,6 +40,12 @@
                type='text'
                placeholder="Enter word"
                onChange={this.handleWordChange}/>
+               <input 
+                 type='checkbox'
+                 onChange={this.handleMatchStartChange} >Match start</input>
+               <input 
+                 type='checkbox'
+                 onChange={this.handleMatchEndChange} >Match end</input>
                <input type="submit" value="Check"/>
            </form>
           );
@@ -58,11 +70,12 @@
       });
       var WordsBox = React.createClass({
         submitWord: function(w) {
-          console.log(w.word);
+          console.log(w);
           var url=this.props.url + w.word;
           console.log(url);
           $.ajax({
             url: url,
+            data: {match_start:w.matchStart, match_end:w.matchEnd},
             dataType: 'json',
             cache: false,
             success: function(data) {
