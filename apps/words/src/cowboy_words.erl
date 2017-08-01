@@ -64,9 +64,9 @@ init([{port, Port}]) ->
   Dispatch = cowboy_router:compile([
                                     {'_', Handlers}]),
   io:format("Starting cowboy on port ~p~n", [Port]),
-  {ok, _} = cowboy:start_http(my_http_listener, 100,
+  {ok, _} = cowboy:start_clear(my_http_listener, 
                               [{port, Port}],
-                              [{env, [{dispatch, Dispatch}]}]),
+                              #{env => #{dispatch => Dispatch}}),
   {ok, #state{}}.
 
 %%--------------------------------------------------------------------

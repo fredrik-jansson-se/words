@@ -34,7 +34,7 @@ qs_to_opts([{<<"match_start">>, <<"true">>}|T], Opts) ->
 qs_to_opts([{<<"match_end">>, <<"true">>}|T], Opts) ->
   qs_to_opts(T, [match_end|Opts]);
 qs_to_opts([H|T], Opts) ->
-  io:format("Skipping ~p~n", [H]),
+  io:format("Skipping unknown opt ~p~n", [H]),
   qs_to_opts(T, Opts);
 qs_to_opts([], Opts) ->
   Opts.
